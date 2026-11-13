@@ -13,90 +13,58 @@ router.use(protect);
 router.post("/upload", upload.single("audio"), uploadRecording);
 
 // Get only the authenticated user's recordings.
+
+// Get all recordings belonging to the authenticated user.
 router.get("/", async (req, res) => {
   try {
     const recordings = await Recording.find({
       user: req.user.id,
       isDeleted: false
     })
-      .select("-__v")
+      .select("-audio.storageKey -__v")
       .sort({ createdAt: -1 })
       .lean();
 
-    return res.status(200).json({
-      recordings
-    });
+    return res.status(200).json({ recordings });
   } catch (error) {
-    console.error("Recording retrieval failed.");
-
+    console.error("Recording retrieval failed:", error.message);
     return res.status(500).json({
       message: "Unable to retrieve recordings."
     });
   }
 });
 
-
-// Create a recording entry.
-router.post(
-  "/",
-  [
-    body("title")
-      .isString()
-      .trim()
-      .isLength({ min: 1, max: 120 }),
-
-    body("storageKey")
-      .isString()
-      .trim()
-      .isLength({ min: 1, max: 500 }),
-
-    body("mimeType")
-      .isIn(["audio/wav", "audio/mpeg", "audio/mp4", "audio/m4a", "audio/x-m4a"]),
-
-    body("sizeBytes")
-      .isInt({ min: 1, max: 100 * 1024 * 1024 })
-      .toInt()
-  ],
-  async (req, res) => {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        message: "Invalid recording information."
-      });
-    }
-
-    try {
-      const { title, storageKey, mimeType, sizeBytes } = req.body;
-
-      const recording = await Recording.create({
-        user: req.user.id,
-        title,
-        audio: {
-          storageKey,
-          mimeType,
-          sizeBytes
-        }
-      });
-
-      return res.status(201).json({
-        message: "Recording created successfully.",
-        recording: {
-          id: recording._id,
-          title: recording.title,
-          status: recording.status,
-          createdAt: recording.createdAt
-        }
-      });
-    } catch (error) {
-      console.error("Recording creation failed.");
-
-      return res.status(500).json({
-        message: "Unable to create recording."
-      });
-    }
+// Get one recording belonging to the authenticated user.
+router.get("/:id", param("id").isMongoId(), async (req, res) => {
+  if (!validationResult(req).isEmpty()) {
+    return res.status(400).json({
+      message: "Invalid recording ID."
+    });
   }
-);
+
+  try {
+    const recording = await Recording.findOne({
+      _id: req.params.id,
+      user: req.user.id,
+      isDeleted: false
+    })
+      .select("-audio.storageKey -__v")
+      .lean();
+
+    if (!recording) {
+      return res.status(404).json({
+        message: "Recording not found."
+      });
+    }
+
+    return res.status(200).json({ recording });
+  } catch (error) {
+    console.error("Recording retrieval failed:", error.message);
+    return res.status(500).json({
+      message: "Unable to retrieve recording."
+    });
+  }
+});
 
 
 // Update recording title, transcript, or summary.
