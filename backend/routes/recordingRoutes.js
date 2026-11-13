@@ -1,7 +1,8 @@
 
 const express = require("express");
 const { body, param, validationResult } = require("express-validator");
-
+const upload = require("../middleware/uploadMiddleware");
+const { uploadRecording } = require("../controllers/recordingController");
 const Recording = require("../models/Recording");
 const protect = require("../middleware/authMiddleware");
 
@@ -9,7 +10,7 @@ const router = express.Router();
 
 // All recording routes require authentication.
 router.use(protect);
-
+router.post("/upload", upload.single("audio"), uploadRecording);
 
 // Get only the authenticated user's recordings.
 router.get("/", async (req, res) => {

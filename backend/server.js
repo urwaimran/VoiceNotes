@@ -1,10 +1,11 @@
-const authRoutes = require("./routes/authRoutes");
-const express = require("express");
-const helmet = require("helmet");
-const recordingRoutes = require("./routes/recordingRoutes");
 require("dotenv").config();
 
+const express = require("express");
+const helmet = require("helmet");
+
 const connectDB = require("./config/db");
+const authRoutes = require("./routes/authRoutes");
+const recordingRoutes = require("./routes/recordingRoutes");
 
 const app = express();
 

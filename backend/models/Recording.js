@@ -21,19 +21,10 @@ const recordingSchema = new mongoose.Schema(
 
     // Store file references and metadata, not audio binaries.
     audio: {
-      storageKey: {
-        type: String,
-        required: true
-      },
-      mimeType: {
-        type: String,
-        required: true
-      },
-      sizeBytes: {
-        type: Number,
-        required: true,
-        min: 1
-      }
+        storageKey: { type: String, required: true },
+        mimeType: { type: String, required: true },
+        sizeBytes: { type: Number, required: true, min: 1 },
+        originalName: { type: String, default: "" }
     },
 
     transcript: {
